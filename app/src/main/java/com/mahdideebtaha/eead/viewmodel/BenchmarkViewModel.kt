@@ -16,11 +16,11 @@ class BenchmarkViewModel : ViewModel() {
     val error: LiveData<String> = _error
 
     fun runBenchmark(
-        context: Context,
         category: String,
         algorithm: String,
         repetitions: Int,
-        requestedDataSize: Int = 50000
+        requestedDataSize: Int = 50000,
+        context: Context
     ) {
         val repo = BenchmarkRepository(context)
         repo.runBenchmark(category, algorithm, repetitions, requestedDataSize, {

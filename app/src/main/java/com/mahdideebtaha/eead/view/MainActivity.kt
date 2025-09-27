@@ -42,11 +42,11 @@ class MainActivity : AppCompatActivity() {
             binding.runButton.isEnabled = false            // disable button
 
             viewModel.runBenchmark(
-                this,
                 category,
                 algorithm,
                 repetitions,
-                binding.dataSize.text.toString().toIntOrNull() ?: 512
+                binding.dataSize.text.toString().toIntOrNull() ?: 512,
+                this
             )
         }
     }
