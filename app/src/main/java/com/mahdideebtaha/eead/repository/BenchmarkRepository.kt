@@ -1,15 +1,23 @@
 package com.mahdideebtaha.eead.repository
 
 import android.content.Context
-import com.mahdideebtaha.eead.data.FirebaseService
+import android.util.Log
 import com.mahdideebtaha.eead.model.BenchmarkResult
 import com.mahdideebtaha.eead.utils.EncryptionUtils
 import com.mahdideebtaha.eead.utils.EnergyUtils
-import com.mahdideebtaha.eead.utils.HuffmanCompression
 import com.mahdideebtaha.eead.utils.LZWCompression
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 class BenchmarkRepository(private val context: Context) {
+
+    companion object {
+        private const val TAG = "BenchmarkRepository"
+    }
 
     fun runBenchmark(
         category: String,
@@ -19,106 +27,113 @@ class BenchmarkRepository(private val context: Context) {
         onResult: (BenchmarkResult) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        Thread {
+        CoroutineScope(Dispatchers.Main).launch {
             try {
-                val (inputDataType, inputDataSize) = when (category) {
-                    "Sorting" -> {
-                        val maxSize = 50000
-                        val size = requestedDataSize.coerceAtMost(maxSize).coerceAtLeast(1000)
-                        "IntArray" to size
-                    }
-                    "Compression" -> {
-                        val maxSize = 20000
-                        val size = requestedDataSize.coerceAtMost(maxSize).coerceAtLeast(1000)
-                        "ByteArray" to size
-                    }
-                    "Encryption" -> {
-                        val maxSize = 10000
-                        val size = requestedDataSize.coerceAtMost(maxSize).coerceAtLeast(512)
-                        "ByteArray" to size
-                    }
-                    else -> {
-                        "Unknown" to 1000
-                    }
+                val result = withContext(Dispatchers.Default) {
+                    runBenchmarkInternal(category, algorithm, repetitions, requestedDataSize)
                 }
-
-                // reduce noise battery readings before
-                val batteryReadingsBefore = mutableListOf<Long>()
-                repeat(5) {
-                    batteryReadingsBefore.add(EnergyUtils.averageBatteryCurrent(context).toLong())
-                    Thread.sleep(100)
-                }
-                val tempBefore = getCpuTemperature()
-                val memBefore = getUsedMemoryMb()
-
-                // start timer
-                val startTime = System.currentTimeMillis()
-
-                val times = mutableListOf<Long>()
-
-                repeat(repetitions + 1) { index ->
-                    val elapsedTime = when (category) {
-                        "Sorting" -> runSorting(algorithm, inputDataSize)
-                        "Compression" -> runCompression(algorithm, inputDataSize)
-                        "Encryption" -> runEncryption(algorithm, inputDataSize)
-                        else -> -1L
-                    }
-                    if (index > 0) {
-                        times.add(elapsedTime)
-                        Thread.sleep(100)
-                    }
-                }
-
-                val endTime = System.currentTimeMillis()
-
-                val batteryReadingsAfter = mutableListOf<Long>()
-                repeat(5) {
-                    batteryReadingsAfter.add(EnergyUtils.averageBatteryCurrent(context).toLong())
-                    Thread.sleep(100)
-                }
-                val tempAfter = getCpuTemperature()
-                val memAfter = getUsedMemoryMb()
-
-                val batteryBeforeAvg = batteryReadingsBefore.average()
-                val batteryAfterAvg = batteryReadingsAfter.average()
-                val deltaBattery = batteryAfterAvg - batteryBeforeAvg
-                val avgCurrent = (batteryBeforeAvg + batteryAfterAvg) / 2.0
-                val avgTimeMs = times.average()
-                val durationMs = endTime - startTime
-                val deltaMemoryMb = memAfter - memBefore
-
-                val energyConsumed_mAh = EnergyUtils.calculateEnergyConsumption(avgCurrent, durationMs)
-
-                val result = BenchmarkResult(
-                    algorithm = algorithm,
-                    category = category,
-                    repetitions = repetitions,
-                    avgTimeMs = avgTimeMs,
-                    batteryBefore_uA = batteryBeforeAvg.toLong(),
-                    batteryAfter_uA = batteryAfterAvg.toLong(),
-                    deltaBattery_uA = deltaBattery.toLong(),
-                    energyConsumed_mAh = energyConsumed_mAh,
-                    durationMs = durationMs,
-                    temperatureBeforeC = tempBefore,
-                    temperatureAfterC = tempAfter,
-                    memoryBeforeMb = memBefore,
-                    memoryAfterMb = memAfter,
-                    deltaMemoryMb = deltaMemoryMb,
-                    dataSizeBytes = inputDataSize.toLong(),
-                    dataType = inputDataType
-                )
-
-                FirebaseService.uploadBenchmark(result, {
-                    onResult(result)
-                }, {
-                    onError(it)
-                })
-
+                onResult(result)
             } catch (ex: Exception) {
+                Log.e(TAG, "Benchmark failed", ex)
                 onError(ex)
             }
-        }.start()
+        }
     }
+
+    private suspend fun runBenchmarkInternal(
+        category: String,
+        algorithm: String,
+        repetitions: Int,
+        requestedDataSize: Int
+    ): BenchmarkResult {
+
+        val (inputDataType, inputDataSize) = when (category) {
+            "Sorting" -> {
+                val maxSize = 70000
+                val size = requestedDataSize.coerceIn(1000, maxSize)
+                if (requestedDataSize != size) Log.w(TAG, "Requested sorting size adjusted to $size")
+                "IntArray" to size
+            }
+            "Compression" -> {
+                val maxSize = 40000
+                val size = requestedDataSize.coerceIn(1000, maxSize)
+                if (requestedDataSize != size) Log.w(TAG, "Requested compression size adjusted to $size")
+                "ByteArray" to size
+            }
+            "Encryption" -> {
+                val maxSize = 20000
+                val size = requestedDataSize.coerceIn(512, maxSize)
+                if (requestedDataSize != size) Log.w(TAG, "Requested encryption size adjusted to $size")
+                "ByteArray" to size
+            }
+            else -> {
+                Log.e(TAG, "Unknown category: $category")
+                "Unknown" to 1000
+            }
+        }
+
+        suspend fun stableAverageCurrent(samples: Int = 10, delayMs: Long = 100): Double {
+            val readings = mutableListOf<Long>()
+            repeat(samples) {
+                readings.add(EnergyUtils.averageBatteryCurrent(context).toLong())
+                delay(delayMs)
+            }
+            readings.sort()
+            val trimmed = readings.drop(2).dropLast(2)
+            return trimmed.average()
+        }
+
+        val batteryBeforeAvg = stableAverageCurrent()
+        val tempBefore = getCpuTemperature()
+        val memBefore = getUsedMemoryMb()
+
+        val times = mutableListOf<Long>()
+
+        repeat(repetitions + 1) { index ->
+            val elapsedTime = when (category) {
+                "Sorting" -> runSorting(algorithm, inputDataSize)
+                "Compression" -> runCompression(algorithm, inputDataSize)
+                "Encryption" -> runEncryption(algorithm, inputDataSize)
+                else -> -1L
+            }
+            if (index > 0) {
+                times.add(elapsedTime)
+                delay(100)
+            }
+        }
+
+        val batteryAfterAvg = stableAverageCurrent()
+        val tempAfter = getCpuTemperature()
+        val memAfter = getUsedMemoryMb()
+
+        val deltaBattery = batteryAfterAvg - batteryBeforeAvg
+        val avgCurrent = (batteryBeforeAvg + batteryAfterAvg) / 2.0
+        val avgTimeMs = times.average()
+        val durationMs = (repetitions * avgTimeMs).toLong()
+        val deltaMemoryMb = memAfter - memBefore
+
+        val energyConsumed_mAh = EnergyUtils.calculateEnergyConsumption(avgCurrent, durationMs)
+
+        return BenchmarkResult(
+            algorithm = algorithm,
+            category = category,
+            repetitions = repetitions,
+            avgTimeMs = avgTimeMs,
+            batteryBefore_uA = batteryBeforeAvg.toLong(),
+            batteryAfter_uA = batteryAfterAvg.toLong(),
+            deltaBattery_uA = deltaBattery.toLong(),
+            energyConsumed_mAh = energyConsumed_mAh,
+            durationMs = durationMs,
+            temperatureBeforeC = tempBefore,
+            temperatureAfterC = tempAfter,
+            memoryBeforeMb = memBefore,
+            memoryAfterMb = memAfter,
+            deltaMemoryMb = deltaMemoryMb,
+            dataSizeBytes = inputDataSize.toLong(),
+            dataType = inputDataType
+        )
+    }
+
 
     private fun getUsedMemoryMb(): Long {
         val runtime = Runtime.getRuntime()
@@ -127,15 +142,20 @@ class BenchmarkRepository(private val context: Context) {
     }
 
     private fun getCpuTemperature(): Float {
-        val thermalPath = "/sys/class/thermal/thermal_zone0/temp"
-        return try {
-            val reader = java.io.BufferedReader(java.io.FileReader(thermalPath))
-            val line = reader.readLine()
-            reader.close()
-            line.toFloat() / 1000f
-        } catch (e: Exception) {
-            -1f
+        val thermalPaths = listOf(
+            "/sys/class/thermal/thermal_zone0/temp",
+            "/sys/class/thermal/thermal_zone1/temp"
+        )
+        thermalPaths.forEach { path ->
+            try {
+                val reader = java.io.BufferedReader(java.io.FileReader(path))
+                val line = reader.readLine()
+                reader.close()
+                return line.toFloat() / 1000f
+            } catch (_: Exception) {
+            }
         }
+        return -1f
     }
 
     // ==================
@@ -147,12 +167,13 @@ class BenchmarkRepository(private val context: Context) {
     private fun runSorting(algorithm: String, dataSize: Int): Long {
         val array = generateIntArray(dataSize)
         val start = System.nanoTime()
-        when (algorithm) {
+        val sorted = when (algorithm) {
             "QuickSort" -> array.sortedArray()
             "MergeSort" -> mergeSort(array)
             "BubbleSort" -> bubbleSort(array)
             else -> array.sortedArray()
         }
+        sorted.size
         val end = System.nanoTime()
         return (end - start) / 1_000_000
     }
@@ -211,11 +232,10 @@ class BenchmarkRepository(private val context: Context) {
 
     private fun runCompression(algorithm: String, dataSize: Int): Long {
         val data = generateByteArray(dataSize)
-        val textData = String(data)
         val start = System.nanoTime()
         when (algorithm) {
             "Deflate" -> deflate(data)
-            "Huffman" -> HuffmanCompression.compress(textData)
+            "Huffman" -> HuffmanCompression.compress(data)
             "LZW" -> LZWCompression.compress(data)
             else -> deflate(data)
         }
@@ -227,7 +247,7 @@ class BenchmarkRepository(private val context: Context) {
         val deflater = java.util.zip.Deflater()
         deflater.setInput(data)
         deflater.finish()
-        val output = ByteArray(data.size)
+        val output = ByteArray(data.size * 2)
         val compressedLength = deflater.deflate(output)
         deflater.end()
         return output.copyOf(compressedLength)
@@ -260,4 +280,3 @@ class BenchmarkRepository(private val context: Context) {
         return (end - start) / 1_000_000
     }
 }
-

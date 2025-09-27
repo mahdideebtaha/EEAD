@@ -6,6 +6,10 @@
     <string name="run_benchmark">Run Benchmark</string>
     <string name="running_benchmark_times">Running %1$s (%2$s) benchmark %3$d times...\n</string>
     <string name="error">Error: %1$s</string>
-    <string name="benchmark_complete_algorithm_avg_time_ms_energy_mah">"\n Benchmark Complete\n Algorithm: %1$s\n Avg Time: %2$s ms\n Energy: %3$s mAh\n"</string>
+    <string name="benchmark_complete_algorithm_avg_time_ms_energy_mah">
+    Benchmark Complete
+    Algorithm: %1$s
+    Avg Time: %2$s ms
+    </string>
     <string name="data_size">Data Size</string>
 </resources>

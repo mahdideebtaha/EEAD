@@ -6,9 +6,11 @@
     <string name="number_of_repetitions">عدد التكرارات:</string>
     <string name="run_benchmark">تشغيل الاختبار المعياري</string>
     <string name="running_benchmark_times">يتم تشغيل %1$s (%2$s) عدد %3$d مرات...\n</string>
-    <string name="error">Error: %1$s</string>
+    <string name="error">الخطأ: %1$s</string>
     <string name="benchmark_complete_algorithm_avg_time_ms_energy_mah">
-"\n المعيار الكامل\n الخوارزمية: %1$s\n متوسط الوقت: %2$s مللي ثانية\n الطاقة: %3$s ميلي أمبير-ساعة\n"
+    اكتمال القياس
+    الخوارزمية: %1$s
+    متوسط الوقت: %2$s مللي ثانية
 </string>
-    <string name="data_size">Data Size</string>
+    <string name="data_size">حجم البيانات</string>
 </resources>

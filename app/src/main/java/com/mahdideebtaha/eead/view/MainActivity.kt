@@ -37,11 +37,19 @@ class MainActivity : AppCompatActivity() {
             val category = binding.categorySpinner.selectedItem as String
             val algorithm = binding.algorithmSpinner.selectedItem as String
             val repetitions = binding.repetitionInput.text.toString().toIntOrNull() ?: 1
-            viewModel.runBenchmark(this, category, algorithm, repetitions,binding.userInput)
+
+            binding.progressBar.visibility = View.VISIBLE  // show progress bar
+            binding.runButton.isEnabled = false            // disable button
+
+            viewModel.runBenchmark(
+                this,
+                category,
+                algorithm,
+                repetitions,
+                binding.dataSize.text.toString().toIntOrNull() ?: 512
+            )
         }
-
     }
-
 
     private fun setupSpinners() {
         binding.categorySpinner.adapter =
@@ -62,37 +70,28 @@ class MainActivity : AppCompatActivity() {
                         )
                 }
 
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    // Optionally handle no selection here
-                }
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
     }
 
     private fun observeViewModel() {
-        viewModel.result.observe(this) {
-            val energyFormatted = formatEnergy(it.energyConsumed_mAh)
+        viewModel.result.observe(this) { result ->
+            binding.progressBar.visibility = View.GONE
+            binding.runButton.isEnabled = true
 
             binding.resultTextView.text = getString(
                 R.string.benchmark_complete_algorithm_avg_time_ms_energy_mah,
-                it.algorithm,
-                "%.2f".format(it.avgTimeMs),
-                energyFormatted
-            ).trimIndent()
+                result.algorithm,
+                "%.2f".format(result.avgTimeMs)
+            )
         }
 
-        viewModel.error.observe(this) {
-            binding.resultTextView.text = getString(R.string.error, it)
-        }
-    }
+        viewModel.error.observe(this) { errorMsg ->
+            binding.progressBar.visibility = View.GONE
+            binding.runButton.isEnabled = true
 
-    private fun formatEnergy(mAh: Double): String {
-        return when {
-            mAh >= 1 -> String.format("%.2f mAh", mAh)
-            mAh >= 0.001 -> String.format("%.4f mAh", mAh)
-            mAh > 0.0 -> String.format("%.2f µAh", mAh * 1_000_000)
-            else -> "0.0 mAh"
+            binding.resultTextView.text = getString(R.string.error, errorMsg)
         }
     }
-
 
 }
