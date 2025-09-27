@@ -4,7 +4,11 @@ import android.content.Context
 import android.os.BatteryManager
 
 object EnergyUtils {
-    fun averageBatteryCurrent(context: Context, durationMs: Long = 2000, intervalMs: Long = 200): Int {
+    fun averageBatteryCurrent(
+        context: Context,
+        durationMs: Long = 2000,
+        intervalMs: Long = 200
+    ): Int {
         val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val readings = mutableListOf<Int>()
         val start = System.currentTimeMillis()
