@@ -59,7 +59,7 @@ class BenchmarkRepository(private val context: Context) {
             }
 
             "Compression" -> {
-                val maxSize = 40000
+                val maxSize = 70000
                 val size = requestedDataSize.coerceIn(1000, maxSize)
                 if (requestedDataSize != size) Log.w(
                     TAG, "Requested compression size adjusted to $size"
@@ -68,7 +68,7 @@ class BenchmarkRepository(private val context: Context) {
             }
 
             "Encryption" -> {
-                val maxSize = 20000
+                val maxSize = 70000
                 val size = requestedDataSize.coerceIn(512, maxSize)
                 if (requestedDataSize != size) Log.w(
                     TAG, "Requested encryption size adjusted to $size"
