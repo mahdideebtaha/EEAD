@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">EEAD</string>
+    <string name="select_algorithm_category">Select Algorithm Category:</string>
+    <string name="select_algorithm">Select Algorithm:</string>
+    <string name="number_of_repetitions">Number of repetitions:</string>
+    <string name="run_benchmark">Run Benchmark</string>
+    <string name="running_benchmark_times">Running %1$s (%2$s) benchmark %3$d times...\n</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EEAD</string>
+    <string name="select_algorithm_category">اختر فئة الخوارزمية:</string>
+    <string name="select_algorithm">اختر الخوارزمية:</string>
+    <string name="number_of_repetitions">عدد التكرارات:</string>
+    <string name="run_benchmark">تشغيل الاختبار المعياري</string>
+    <string name="running_benchmark_times">يتم تشغيل %1$s (%2$s) عدد %3$d مرات...\n</string>
+</resources>
