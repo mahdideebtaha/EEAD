@@ -10,4 +10,5 @@
     <string name="benchmark_complete_algorithm_avg_time_ms_energy_mah">
 "\n المعيار الكامل\n الخوارزمية: %1$s\n متوسط الوقت: %2$s مللي ثانية\n الطاقة: %3$s ميلي أمبير-ساعة\n"
 </string>
+    <string name="data_size">Data Size</string>
 </resources>

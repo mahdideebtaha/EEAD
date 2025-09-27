@@ -7,6 +7,7 @@ import android.widget.ArrayAdapter
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.mahdideebtaha.eead.R
 import com.mahdideebtaha.eead.databinding.ActivityMainBinding
 import com.mahdideebtaha.eead.viewmodel.BenchmarkViewModel
 
@@ -36,7 +37,7 @@ class MainActivity : AppCompatActivity() {
             val category = binding.categorySpinner.selectedItem as String
             val algorithm = binding.algorithmSpinner.selectedItem as String
             val repetitions = binding.repetitionInput.text.toString().toIntOrNull() ?: 1
-            viewModel.runBenchmark(this, category, algorithm, repetitions)
+            viewModel.runBenchmark(this, category, algorithm, repetitions,binding.userInput)
         }
 
     }
@@ -69,16 +70,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         viewModel.result.observe(this) {
+            val energyFormatted = formatEnergy(it.energyConsumed_mAh)
+
             binding.resultTextView.text = getString(
-                com.mahdideebtaha.eead.R.string.benchmark_complete_algorithm_avg_time_ms_energy_mah,
+                R.string.benchmark_complete_algorithm_avg_time_ms_energy_mah,
                 it.algorithm,
                 "%.2f".format(it.avgTimeMs),
-                "%.6f".format(it.energyConsumed_mAh)
+                energyFormatted
             ).trimIndent()
         }
 
         viewModel.error.observe(this) {
-            binding.resultTextView.text = getString(com.mahdideebtaha.eead.R.string.error, it)
+            binding.resultTextView.text = getString(R.string.error, it)
         }
     }
+
+    private fun formatEnergy(mAh: Double): String {
+        return when {
+            mAh >= 1 -> String.format("%.2f mAh", mAh)
+            mAh >= 0.001 -> String.format("%.4f mAh", mAh)
+            mAh > 0.0 -> String.format("%.2f µAh", mAh * 1_000_000)
+            else -> "0.0 mAh"
+        }
+    }
+
+
 }

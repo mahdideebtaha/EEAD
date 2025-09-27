@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.mahdideebtaha.eead" />
+                  <option name="mobileSdkAppId" value="1:528967639079:android:393375dcaeb6412eb0ae02" />
+                  <option name="projectId" value="eead-b6bdd" />
+                  <option name="projectNumber" value="528967639079" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

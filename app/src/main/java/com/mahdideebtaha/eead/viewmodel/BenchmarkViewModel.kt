@@ -15,9 +15,15 @@ class BenchmarkViewModel : ViewModel() {
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
-    fun runBenchmark(context: Context, category: String, algorithm: String, repetitions: Int) {
+    fun runBenchmark(
+        context: Context,
+        category: String,
+        algorithm: String,
+        repetitions: Int,
+        requestedDataSize: Int = 50000
+    ) {
         val repo = BenchmarkRepository(context)
-        repo.runBenchmark(category, algorithm, repetitions, {
+        repo.runBenchmark(category, algorithm, repetitions, requestedDataSize, {
             _result.postValue(it)
         }, {
             _error.postValue(it.message)
