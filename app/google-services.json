@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "528967639079",
+    "project_id": "eead-b6bdd",
+    "storage_bucket": "eead-b6bdd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528967639079:android:393375dcaeb6412eb0ae02",
+        "android_client_info": {
+          "package_name": "com.mahdideebtaha.eead"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmnEu5EPleUP3Q9phHk-uxk-OzHg8cmww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
